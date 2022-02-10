@@ -1,2 +1,2 @@
-# cot-report-api
-a service that provide COT Report data for developers and traders
+# COT Report API
+a service to provide COT Report data for developers and traders
