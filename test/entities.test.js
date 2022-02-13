@@ -7,7 +7,7 @@ describe('COT Construction', () => {
     it('should create a cot model with cot builder', (done) => {
 
         const expected = {
-            currency: 'usd',
+            asset: 'usd',
             date: '2021-01-01T00:00:00.000Z',
             levLongPos: 14213,
             levShortPos: 71056,

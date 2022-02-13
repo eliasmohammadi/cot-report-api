@@ -1,6 +1,8 @@
+const {ASSETS} = require('./constant')
+
 class COT {
     constructor(cotBuilder) {
-        this.currency = cotBuilder.currency
+        this.asset = cotBuilder.asset
         this.date = cotBuilder.date
         this.levLongPos = cotBuilder.longPos
         this.levShortPos = cotBuilder.shortPos
@@ -18,8 +20,8 @@ class COT {
 
 class CotBuilder {
 
-    constructor(currency, date) {
-        this.currency = currency
+    constructor(asset, date) {
+        this.asset = asset
         this.date = date
     }
 
@@ -58,4 +60,27 @@ class CotBuilder {
     }
 }
 
-module.exports = {CotBuilder}
+function cotFromRow(row) {
+
+    const asset = ASSETS[row['Market_and_Exchange_Names']]
+    const report_date = row["Report_Date_as_MM_DD_YYYY"].toISOString()
+    const levLongPos = row["Lev_Money_Positions_Long_All"]
+    const levShortPos = row["Lev_Money_Positions_Short_All"]
+    const changeLongPos = row["Change_in_Lev_Money_Long_All"]
+    const changeShortPos = row["Change_in_Lev_Money_Short_All"]
+    const percentOILong = row["Pct_of_OI_Lev_Money_Long_All"]
+    const percentOIShort = row["Pct_of_OI_Lev_Money_Short_All"]
+
+    return new CotBuilder(asset, report_date)
+        .levMoneyLong(levLongPos)
+        .levMoneyShort(levShortPos)
+        .changeLongPos(changeLongPos)
+        .changeShortPos(changeShortPos)
+        .percentOILong(percentOILong)
+        .percentOIShort(percentOIShort)
+        .build()
+
+}
+
+
+module.exports = {CotBuilder, cotFromRow}

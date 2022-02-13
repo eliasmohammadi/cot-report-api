@@ -105,4 +105,5 @@ dist
 
 # JetBains
 .idea
-/src/files/
+playground.js
+files
