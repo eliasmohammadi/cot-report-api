@@ -1,44 +1,54 @@
 const {describe, it} = require('mocha')
-const chai = require('chai')
-const {CotBuilder,cotFromRow} = require('../src/entities/cot.model')
+const {expect} = require('chai')
+const fs = require('fs')
+const path = require('path')
+
+const util = require('../src/libs/utils')
+
+const AdmZip = require('adm-zip')
+
+function createZipFile(){
+
+    const testDir = path.join(process.cwd(),'test','test-files')
+    if(!fs.existsSync(testDir))
+        fs.mkdirSync(testDir)
+    const fakeData  = {
+        content:"test"
+    }
+    const testFile = path.join(testDir,'test-text.txt')
+
+    fs.writeFileSync(testFile,JSON.stringify(fakeData))
+
+    const zip = new AdmZip()
+    zip.addLocalFile(testFile)
+    const zipFile = path.join(testDir,'test-zip.zip')
+    zip.writeZip(zipFile,()=>{
+        fs.unlinkSync(testFile)
+    })
+    return zipFile
+}
 
 
-describe("Work With Excel File", () => {
+describe("Utils Test", () => {
 
-    it("should convert a excel row to cot model", (done) => {
-        const row = {
-            "Market_and_Exchange_Names": "CANADIAN DOLLAR - CHICAGO MERCANTILE EXCHANGE",
-            "Report_Date_as_MM_DD_YYYY": new Date("2021-12-20T20:30:00.000Z"),
-            "Lev_Money_Positions_Long_All": 16325,
-            "Lev_Money_Positions_Short_All": 43932,
-            "Change_in_Lev_Money_Long_All": -11367,
-            "Change_in_Lev_Money_Short_All": 912,
-            "Pct_of_OI_Lev_Money_Long_All": 11.2,
-            "Pct_of_OI_Lev_Money_Short_All": 30.2,
-        }
+    it("should unzip downloaded file",async ()=>{
 
-        const expected = new CotBuilder("cad","2021-12-20T20:30:00.000Z")
-            .levMoneyLong(16325)
-            .levMoneyShort(43932)
-            .changeLongPos(-11367)
-            .changeShortPos(912)
-            .percentOILong(11.2)
-            .percentOIShort(30.2)
-            .build()
+        //TODO
+        //     2: unzip file in specific folder
+        //     3: remove zip and unzipped files after test pass
 
-        const actual = cotFromRow(row)
+        const zipFile = createZipFile()
+        const outputPathDir = path.join(process.cwd(),'test','test-files')
+        const unzippedFile = await util.unzip(zipFile,outputPathDir)
 
-        chai.expect(actual).to.be.an('object')
-        chai.expect(actual.asset).eq(expected.asset)
-        chai.expect(actual.date).eq(expected.date)
-        chai.expect(actual.levLongPos).eq(expected.levLongPos)
-        chai.expect(actual.levShortPos).eq(expected.levShortPos)
-        chai.expect(actual.changeLongPos).eq(expected.changeLongPos)
-        chai.expect(actual.changeShortPos).eq(expected.changeShortPos)
-        chai.expect(actual.poiLongPos).eq(expected.poiLongPos)
-        chai.expect(actual.poiShortPos).eq(expected.poiShortPos)
-        chai.expect(actual.flip).eq(expected.flip)
 
-        done()
+        const outputFile = path.join(outputPathDir,unzippedFile.entry[0])
+        const isExists = fs.existsSync(outputFile)
+
+        expect(isExists).to.be.eq(true)
+
+        fs.rmSync(outputPathDir,{recursive:true,force:true})
+
+
     })
 })
