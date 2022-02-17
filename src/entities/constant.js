@@ -9,6 +9,10 @@ const ASSETS = {
     'BRITISH POUND STERLING - CHICAGO MERCANTILE EXCHANGE':'gbp'
 }
 
+
+const PREFIX_DOWNLOADABLE_FILE_NAME = 'fut_fin_xls_'
+
 module.exports = {
-    ASSETS
+    ASSETS,
+    PREFIX_DOWNLOADABLE_FILE_NAME
 }
