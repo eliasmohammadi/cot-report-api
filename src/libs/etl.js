@@ -1,7 +1,7 @@
 const {Transform} = require('stream')
 const {cotFromRow} = require('../entities/cot.model')
 
-class FilterAssetsTransform extends Transform {
+class AssetsTransform extends Transform {
     constructor() {
         super({
             objectMode:true,
@@ -20,5 +20,5 @@ class FilterAssetsTransform extends Transform {
 }
 
 module.exports = {
-    FilterAssetsTransform
+    AssetsTransform
 }
