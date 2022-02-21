@@ -14,7 +14,7 @@ class COT {
     }
 
     calcFlip() {
-        return this.poiLongPos - this.poiShortPos
+        return parseFloat((this.poiLongPos - this.poiShortPos).toFixed(2))
     }
 }
 
