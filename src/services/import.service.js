@@ -4,8 +4,9 @@ const {getDownloadableFileName, unzip} = require('../libs/utils')
 const fs = require('fs')
 const path = require('path')
 const xlsx = require('xlsx')
-const {AssetsTransform, MongoWriterStream} = require('../libs/helper.stream')
+const {AssetsTransform, MongoWriterStream, FilterStream} = require('../libs/helper.stream')
 const repoManager = require('../repositories/repository.manager')
+const {ASSETS} = require('../entities/constant')
 
 async function downloadCotReport() {
     const endpoint = `${config.COT_REPORT_BASE_ENDPOINT}${getDownloadableFileName(new Date())}`
@@ -36,7 +37,11 @@ async function importCotReport() {
      *  insert cot object to  database
      */
 
-    xlsReaderStream.pipe(new AssetsTransform())
+    xlsReaderStream
+        .pipe(new FilterStream(function (cotRow) {
+            return ASSETS[cotRow['Market_and_Exchange_Names']] !== undefined
+        }))
+        .pipe(new AssetsTransform())
         .pipe(new MongoWriterStream(repoManager.assetRepo(), {batchSize: 30}))
 
 }

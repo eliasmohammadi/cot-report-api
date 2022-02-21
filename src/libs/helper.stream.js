@@ -19,6 +19,19 @@ class AssetsTransform extends Transform {
     }
 }
 
+class FilterStream extends Transform {
+    constructor(condition) {
+        super({objectMode:true});
+        this.condition = condition
+    }
+    _transform(chunk, encoding, callback) {
+        if(this.condition(chunk)){
+            this.push(chunk)
+        }
+        callback()
+    }
+}
+
 class MongoWriterStream extends Writable {
 
     constructor(repoInstance, options = {}) {
@@ -59,5 +72,6 @@ class MongoWriterStream extends Writable {
 
 module.exports = {
     AssetsTransform,
-    MongoWriterStream
+    MongoWriterStream,
+    FilterStream
 }
