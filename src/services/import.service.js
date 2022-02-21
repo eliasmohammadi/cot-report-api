@@ -19,10 +19,10 @@ async function downloadCotReport() {
 async function importCotReport() {
     /** download and write*/
 
-    /*const downloadReader = await downloadCotReport()
+    const downloadReader = await downloadCotReport()
     const fileName = path.join(config.FILE_PATH_DIR, config.COT_ZIP_NAME)
     const writer = fs.createWriteStream(fileName)
-    downloadReader.data.pipe(writer)*/
+    downloadReader.data.pipe(writer)
 
     /**unzip*/
     const filePath = path.join(config.FILE_PATH_DIR, config.COT_ZIP_NAME)
