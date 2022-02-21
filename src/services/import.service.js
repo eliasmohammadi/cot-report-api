@@ -1,21 +1,45 @@
 const axios = require('axios')
 const config = require("../configs/app.config")
-const {getDownloadableFileName} = require('../libs/utils')
+const {getDownloadableFileName, unzip} = require('../libs/utils')
 const fs = require('fs')
 const path = require('path')
-async function downloadCotReport(){
-    const endpoint = `${config.COT_REPORT_BASE_ENDPOINT}${getDownloadableFileName(new Date())}`
+const xlsx = require('xlsx')
+const {AssetsTransform} = require('../libs/etl')
 
-    const result = await axios.get(endpoint,{
-        responseType:"stream"
+async function downloadCotReport() {
+    const endpoint = `${config.COT_REPORT_BASE_ENDPOINT}${getDownloadableFileName(new Date())}`
+    return axios.get(endpoint, {
+        responseType: "stream"
     })
 
-    const fileName = path.join(config.FILE_PATH_DIR,config.COT_ZIP_NAME)
+}
+
+async function importCotReport() {
+    /** download and write*/
+
+    const downloadReader = await downloadCotReport()
+    const fileName = path.join(config.FILE_PATH_DIR, config.COT_ZIP_NAME)
     const writer = fs.createWriteStream(fileName)
-    result.data.pipe(writer)
+    downloadReader.data.pipe(writer)
+
+    /**unzip*/
+    const filePath = path.join(FILE_PATH_DIR, COT_ZIP_NAME)
+    const unzippedFile = await unzip(filePath, FILE_PATH_DIR)
+    const file = path.join(FILE_PATH_DIR, unzippedFile.entry[0])
+
+    /** read xls file in json format as stream */
+    const workbook = xlsx.readFile(file, {cellDates: true})
+    const xlsReaderStream = xlsx.stream.to_json(workbook.Sheets.XLS, {})
+
+    /** transform xls row into cot object with stream pipeline.
+     *  insert cot object to  database
+     */
+
+    xlsReaderStream.pipe(new AssetsTransform())
 
 }
 
 module.exports = {
-    downloadCotReport
+    downloadCotReport,
+    importCotReport
 }
