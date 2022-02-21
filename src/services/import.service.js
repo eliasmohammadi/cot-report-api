@@ -4,7 +4,8 @@ const {getDownloadableFileName, unzip} = require('../libs/utils')
 const fs = require('fs')
 const path = require('path')
 const xlsx = require('xlsx')
-const {AssetsTransform} = require('../libs/etl')
+const {AssetsTransform, MongoWriterStream} = require('../libs/helper.stream')
+const repoManager = require('../repositories/repository.manager')
 
 async function downloadCotReport() {
     const endpoint = `${config.COT_REPORT_BASE_ENDPOINT}${getDownloadableFileName(new Date())}`
@@ -17,15 +18,15 @@ async function downloadCotReport() {
 async function importCotReport() {
     /** download and write*/
 
-    const downloadReader = await downloadCotReport()
+    /*const downloadReader = await downloadCotReport()
     const fileName = path.join(config.FILE_PATH_DIR, config.COT_ZIP_NAME)
     const writer = fs.createWriteStream(fileName)
-    downloadReader.data.pipe(writer)
+    downloadReader.data.pipe(writer)*/
 
     /**unzip*/
-    const filePath = path.join(FILE_PATH_DIR, COT_ZIP_NAME)
-    const unzippedFile = await unzip(filePath, FILE_PATH_DIR)
-    const file = path.join(FILE_PATH_DIR, unzippedFile.entry[0])
+    const filePath = path.join(config.FILE_PATH_DIR, config.COT_ZIP_NAME)
+    const unzippedFile = await unzip(filePath, config.FILE_PATH_DIR)
+    const file = path.join(config.FILE_PATH_DIR, unzippedFile.entry[0])
 
     /** read xls file in json format as stream */
     const workbook = xlsx.readFile(file, {cellDates: true})
@@ -36,6 +37,7 @@ async function importCotReport() {
      */
 
     xlsReaderStream.pipe(new AssetsTransform())
+        .pipe(new MongoWriterStream(repoManager.assetRepo(), {batchSize: 30}))
 
 }
 
