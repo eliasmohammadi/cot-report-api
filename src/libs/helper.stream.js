@@ -42,8 +42,12 @@ class MongoWriterStream extends Writable {
     }
 
     _insertMany() {
-        if (this.records.length !== 0) {
-            this.repo.insertMany(this.records)
+        try {
+            if (this.records.length !== 0) {
+                this.repo.insertMany(this.records)
+            }
+        } catch (e) {
+            console.log(e)
         }
     }
 
@@ -59,13 +63,19 @@ class MongoWriterStream extends Writable {
             }
             callback()
         } catch (e) {
+
             callback(e)
         }
     }
 
     _final(callback) {
-        if (this.records.length > 0) {
-            this._insertMany()
+        try {
+            if (this.records.length > 0) {
+                this._insertMany()
+            }
+        } catch (e) {
+            if (e.code !== 11000)
+                callback(e)
         }
     }
 }
