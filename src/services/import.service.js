@@ -16,33 +16,58 @@ async function downloadCotReport() {
 
 }
 
-async function importCotReport() {
-    /** download and write*/
 
-    const downloadReader = await downloadCotReport()
+async function writeCotReport(readable) {
+
+
     const fileName = path.join(config.FILE_PATH_DIR, config.COT_ZIP_NAME)
     const writer = fs.createWriteStream(fileName)
-    downloadReader.data.pipe(writer)
+    return new Promise(((resolve, reject) => {
+        readable.data.pipe(writer).on('error', (err) => {
+            reject({
+                completed: false,
+                error: err.message
+            })
+        }).on('close', () => {
+            resolve({
+                completed: true,
+                error: ""
+            })
+        })
+    }))
+}
 
-    /**unzip*/
-    const filePath = path.join(config.FILE_PATH_DIR, config.COT_ZIP_NAME)
-    const unzippedFile = await unzip(filePath, config.FILE_PATH_DIR)
-    const file = path.join(config.FILE_PATH_DIR, unzippedFile.entry[0])
 
-    /** read xls file in json format as stream */
-    const workbook = xlsx.readFile(file, {cellDates: true})
-    const xlsReaderStream = xlsx.stream.to_json(workbook.Sheets.XLS, {})
+async function importCotReport() {
+    /** download and write*/
+    const downloadReader = await downloadCotReport()
+    const writeResult = await writeCotReport(downloadReader)
 
-    /** transform xls row into cot object with stream pipeline.
-     *  insert cot object to  database
-     */
+    if (writeResult.completed) {
+        /**unzip*/
+        const filePath = path.join(config.FILE_PATH_DIR, config.COT_ZIP_NAME)
+        const unzippedFile = await unzip(filePath, config.FILE_PATH_DIR)
+        const file = path.join(config.FILE_PATH_DIR, unzippedFile.entry[0])
 
-    xlsReaderStream
-        .pipe(new FilterStream(function (cotRow) {
-            return ASSETS[cotRow['Market_and_Exchange_Names']] !== undefined
-        }))
-        .pipe(new AssetsTransform())
-        .pipe(new MongoWriterStream(repoManager.assetRepo(), {batchSize: 30}))
+        /** read xls file in json format as stream */
+        const workbook = xlsx.readFile(file, {cellDates: true})
+        const xlsReaderStream = xlsx.stream.to_json(workbook.Sheets.XLS, {})
+
+        /** transform xls row into cot object with stream pipeline.
+         *  insert cot object to  database
+         */
+
+        xlsReaderStream
+            .pipe(new FilterStream(function (cotRow) {
+                return ASSETS[cotRow['Market_and_Exchange_Names']] !== undefined
+            }))
+            .pipe(new AssetsTransform())
+            .pipe(new MongoWriterStream(repoManager.assetRepo(), {batchSize: 30}))
+
+    } else {
+        console.log(writeResult.error)
+    }
+
 
 }
 
