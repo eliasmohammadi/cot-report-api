@@ -3,9 +3,12 @@ const assetService = require('../services/asset.service')
 async function getAssets(req, res) {
 
     try {
-        const {asset, start_date:startDate, end_date:endDate} = req.query
+        const {asset, start_date: startDate, end_date: endDate, skip, limit} = req.query
 
-        const result = await assetService.getAssets(startDate, endDate, asset)
+        const result = await assetService.getAssets(startDate, endDate, asset, {
+            skip: parseInt(skip) || 0,
+            limit: parseInt(limit) || 10
+        })
         res.status(200).send({
             result: result
         })
@@ -16,7 +19,24 @@ async function getAssets(req, res) {
 
 }
 
+async function getAssetsAggregation(req, res) {
+    try {
+
+        const {pos, agg, start_date: startDate, end_date: endDate, asset} = req.query
+        const result = await assetService.getAssetsAggregation(pos, agg, startDate, endDate, asset)
+        res.status(200).send({
+            result: result
+        })
+
+    } catch (e) {
+        res.status(500).send({
+            message: e.message
+        })
+    }
+}
+
 
 module.exports = {
-    getAssets
+    getAssets,
+    getAssetsAggregation
 }

@@ -12,7 +12,15 @@ const ASSETS = {
 
 const PREFIX_DOWNLOADABLE_FILE_NAME = 'fut_fin_xls_'
 
+const SPECIFIC_KEYWORD = {
+    LONG:'long',
+    SHORT:'short',
+    MAX:"max",
+    MIN:"min"
+}
+
 module.exports = {
     ASSETS,
-    PREFIX_DOWNLOADABLE_FILE_NAME
+    PREFIX_DOWNLOADABLE_FILE_NAME,
+    SPECIFIC_KEYWORD
 }
