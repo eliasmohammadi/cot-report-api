@@ -1,9 +1,10 @@
 const express = require('express')
 const router = express.Router()
-const {getAssets} = require('../controllers/assets.controller.js')
+const {getAssets,getAssetsAggregation} = require('../controllers/assets.controller.js')
 
 
 router.route('/assets/').get(getAssets)
+router.route('/assets/aggs').get(getAssetsAggregation)
 
 
 module.exports = {
