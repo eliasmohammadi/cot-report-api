@@ -7,8 +7,34 @@ class AssetRepository {
         return this.collection.insertMany(assets)
     }
 
+    getByAssetName(assetName,options={}){
+        const mongoFindQuery = this.collection.find({asset:assetName})
+        if(options.limit)
+            mongoFindQuery.limit(options.limit)
+        if(options.skip)
+            mongoFindQuery.skip(options.skip)
+        return mongoFindQuery.toArray()
+    }
 
-    getAssetBy(startDate = "", endDate = "", asset = "", options = {}) {
+    getByDateRange(startDate="",endDate="",options={}) {
+        const query = {}
+        if (startDate) {
+            query.date = {}
+            query.date.$gte = startDate
+        }
+        if (endDate)
+            query.date.$lte =  endDate
+
+        const mongoFindQuery = this.collection.find(query)
+
+        if(options.limit)
+            mongoFindQuery.limit(options.limit)
+        if(options.skip)
+            mongoFindQuery.skip(options.skip)
+
+        return mongoFindQuery.toArray()
+    }
+    filterAsset(startDate = "", endDate = "", asset = "", options = {}) {
         const query = {}
         if (startDate) {
             query.date = {}
@@ -19,8 +45,14 @@ class AssetRepository {
         if (asset) {
             query.asset = asset
         }
+        const mongoFindQuery = this.collection.find(query)
 
-        return this.collection.find(query, options).toArray()
+        if(options.limit)
+            mongoFindQuery.limit(options.limit)
+        if(options.skip)
+            mongoFindQuery.skip(options.skip)
+
+        return mongoFindQuery.toArray()
     }
 
     getMaxLongPos(startDate = "", endDate = "", asset = "", options = {}) {
