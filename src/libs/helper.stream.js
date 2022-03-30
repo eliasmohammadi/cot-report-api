@@ -71,6 +71,7 @@ class MongoWriterStream extends Writable {
             if (this.records.length > 0) {
                 this._insertMany()
             }
+            callback()
         } catch (e) {
                 callback(e)
         }

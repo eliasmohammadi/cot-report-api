@@ -1,7 +1,7 @@
 const {SPECIFIC_KEYWORD} = require("../entities/constant")
 const {_} = require('lodash')
 
-class AssetRepository {
+class AssetsRepository {
     constructor(collection) {
         this.collection = collection
     }
@@ -10,7 +10,7 @@ class AssetRepository {
         try {
             await this.collection.insertMany(assets)
         } catch (e) {
-            if (e.code === 11000){
+            if (e.code === 11000) {
 
             }
 
@@ -156,5 +156,5 @@ class AssetRepository {
 
 
 module.exports = {
-    AssetRepository
+    AssetRepository: AssetsRepository
 }

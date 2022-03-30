@@ -1,5 +1,5 @@
 const importService = require('../services/import.service')
-const assetService = require('../services/asset.service')
+const assetService = require('../services/assets.service')
 
 async function getAssets(req, res) {
 
@@ -53,9 +53,23 @@ async function importAssets(req, res) {
 
 }
 
+async function syncAssets(req, res) {
+    try {
+        const dateReport = req.body.date
+        importService.syncCotReport(dateReport)
+        res.status(200).send({
+            imported: true
+        })
+    } catch (e) {
+        res.status(500).send({
+            message: e.message
+        })
+    }
+}
 
 module.exports = {
     getAssets,
     getAssetsAggregation,
-    importAssets
+    importAssets,
+    syncAssets
 }

@@ -1,5 +1,5 @@
 const {expressApplication,BASE_END_POINT} = require('./src/configs/express.config')
-const {assetRouter} = require('./src/routers/asset.router')
+const {assetRouter} = require('./src/routers/assets.router')
 const {connectToDb} = require('./src/configs/db.config')
 const repositoryManager = require('./src/repositories/repository.manager')
 
