@@ -37,33 +37,39 @@ async function writeCotReport(readable) {
     }))
 }
 
+/**unzip*/
+async function unzipCotFile(filePath) {
+    const unzippedFile = await unzip(filePath, config.FILE_PATH_DIR)
+    return path.join(config.FILE_PATH_DIR, unzippedFile.entry[0])
+}
 
-async function importCotReport() {
+/** read xls file in json format as stream */
+function createXlsReader(file) {
+    const workbook = xlsx.readFile(file, {cellDates: true})
+    return xlsx.stream.to_json(workbook.Sheets.XLS, {})
+}
+
+/** transform xls row into cot object with stream pipeline.
+ *  insert cot object to  database
+ */
+function insertPipeLine(xlsReaderStream) {
+    return xlsReaderStream
+        .pipe(new FilterStream(function (cotRow) {
+            return ASSETS[cotRow['Market_and_Exchange_Names']] !== undefined
+        }))
+        .pipe(new AssetsTransform())
+        .pipe(new MongoWriterStream(repoManager.assetRepo(), {batchSize: 30}))
+}
+
+async function syncCotReport() {
     /** download and write*/
     const downloadReader = await downloadCotReport()
     const writeResult = await writeCotReport(downloadReader)
 
     if (writeResult.completed) {
-        /**unzip*/
-        const filePath = path.join(config.FILE_PATH_DIR, config.COT_ZIP_NAME)
-        const unzippedFile = await unzip(filePath, config.FILE_PATH_DIR)
-        const file = path.join(config.FILE_PATH_DIR, unzippedFile.entry[0])
-
-        /** read xls file in json format as stream */
-        const workbook = xlsx.readFile(file, {cellDates: true})
-        const xlsReaderStream = xlsx.stream.to_json(workbook.Sheets.XLS, {})
-
-        /** transform xls row into cot object with stream pipeline.
-         *  insert cot object to  database
-         */
-
-        xlsReaderStream
-            .pipe(new FilterStream(function (cotRow) {
-                return ASSETS[cotRow['Market_and_Exchange_Names']] !== undefined
-            }))
-            .pipe(new AssetsTransform())
-            .pipe(new MongoWriterStream(repoManager.assetRepo(), {batchSize: 30}))
-
+        const file = await unzipCotFile(path.join(config.FILE_PATH_DIR, config.COT_ZIP_NAME))
+        const xlsReaderStream = createXlsReader(file)
+        insertPipeLine(xlsReaderStream)
     } else {
         console.log(writeResult.error)
     }
@@ -71,7 +77,15 @@ async function importCotReport() {
 
 }
 
+
+async function importCotReport(zippedFilePath) {
+    const file = await unzipCotFile(zippedFilePath)
+    const xlsReaderStream = createXlsReader(file)
+    insertPipeLine(xlsReaderStream)
+}
+
 module.exports = {
     downloadCotReport,
+    syncCotReport,
     importCotReport
 }
