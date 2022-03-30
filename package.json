@@ -17,6 +17,7 @@
     "express": "^4.17.2",
     "lodash": "^4.17.21",
     "mongodb": "^4.3.1",
+    "multer": "^1.4.4",
     "xlsx": "^0.18.0"
   },
   "devDependencies": {

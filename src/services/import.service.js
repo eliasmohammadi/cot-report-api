@@ -1,6 +1,6 @@
 const axios = require('axios')
 const config = require("../configs/app.config")
-const {getDownloadableFileName, unzip} = require('../libs/utils')
+const {getDownloadableFileName, unzip,removeEntireFile} = require('../libs/utils')
 const fs = require('fs')
 const path = require('path')
 const xlsx = require('xlsx')
@@ -8,8 +8,11 @@ const {AssetsTransform, MongoWriterStream, FilterStream} = require('../libs/help
 const repoManager = require('../repositories/repository.manager')
 const {ASSETS} = require('../entities/constant')
 
-async function downloadCotReport() {
-    const endpoint = `${config.COT_REPORT_BASE_ENDPOINT}${getDownloadableFileName(new Date())}`
+const {pipeline} = require('stream')
+const {promisify} = require('util')
+
+async function downloadCotReport(date) {
+    const endpoint = `${config.COT_REPORT_BASE_ENDPOINT}${getDownloadableFileName(date)}`
     return axios.get(endpoint, {
         responseType: "stream"
     })
@@ -37,33 +40,52 @@ async function writeCotReport(readable) {
     }))
 }
 
+/**unzip*/
+async function unzipCotFile(filePath) {
+    const unzippedFile = await unzip(filePath, config.FILE_PATH_DIR)
+    return path.join(config.FILE_PATH_DIR, unzippedFile.entry[0])
+}
 
-async function importCotReport() {
+/** read xls file in json format as stream */
+function createXlsReader(file) {
+    const workbook = xlsx.readFile(file, {cellDates: true})
+    return xlsx.stream.to_json(workbook.Sheets.XLS, {})
+}
+
+/** transform xls row into cot object with stream pipeline.
+ *  insert cot object to  database
+ */
+async function insertPipeLine(xlsReaderStream) {
+
+
+    const pipelineAsync = promisify(pipeline)
+    const filterStream = new FilterStream(function (cotRow) {
+        return ASSETS[cotRow['Market_and_Exchange_Names']] !== undefined
+    })
+    const assetTransformStream = new AssetsTransform()
+    const insertDbStream = new MongoWriterStream(repoManager.assetRepo(), {batchSize: 30})
+
+    const result = await pipelineAsync(
+        xlsReaderStream,
+        filterStream,
+        assetTransformStream,
+        insertDbStream
+    )
+
+    return result === undefined
+}
+
+async function syncCotReport(date) {
     /** download and write*/
-    const downloadReader = await downloadCotReport()
+    const downloadReader = await downloadCotReport(date)
     const writeResult = await writeCotReport(downloadReader)
 
     if (writeResult.completed) {
-        /**unzip*/
-        const filePath = path.join(config.FILE_PATH_DIR, config.COT_ZIP_NAME)
-        const unzippedFile = await unzip(filePath, config.FILE_PATH_DIR)
-        const file = path.join(config.FILE_PATH_DIR, unzippedFile.entry[0])
-
-        /** read xls file in json format as stream */
-        const workbook = xlsx.readFile(file, {cellDates: true})
-        const xlsReaderStream = xlsx.stream.to_json(workbook.Sheets.XLS, {})
-
-        /** transform xls row into cot object with stream pipeline.
-         *  insert cot object to  database
-         */
-
-        xlsReaderStream
-            .pipe(new FilterStream(function (cotRow) {
-                return ASSETS[cotRow['Market_and_Exchange_Names']] !== undefined
-            }))
-            .pipe(new AssetsTransform())
-            .pipe(new MongoWriterStream(repoManager.assetRepo(), {batchSize: 30}))
-
+        const file = await unzipCotFile(path.join(config.FILE_PATH_DIR, config.COT_ZIP_NAME))
+        const xlsReaderStream = createXlsReader(file)
+        const insertResult = await insertPipeLine(xlsReaderStream)
+        if (insertResult)
+            removeEntireFile(config.FILE_PATH_DIR)
     } else {
         console.log(writeResult.error)
     }
@@ -71,7 +93,16 @@ async function importCotReport() {
 
 }
 
+
+async function importCotReport(zippedFilePath) {
+    const file = await unzipCotFile(zippedFilePath)
+    const xlsReaderStream = createXlsReader(file)
+    const insertResult = await insertPipeLine(xlsReaderStream)
+    if (insertResult)
+       removeEntireFile(config.FILE_PATH_DIR)
+}
+
 module.exports = {
-    downloadCotReport,
+    syncCotReport,
     importCotReport
 }

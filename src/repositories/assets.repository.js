@@ -1,13 +1,20 @@
 const {SPECIFIC_KEYWORD} = require("../entities/constant")
 const {_} = require('lodash')
 
-class AssetRepository {
+class AssetsRepository {
     constructor(collection) {
         this.collection = collection
     }
 
-    insertMany(assets) {
-        return this.collection.insertMany(assets)
+    async insertMany(assets) {
+        try {
+            await this.collection.insertMany(assets)
+        } catch (e) {
+            if (e.code === 11000) {
+
+            }
+
+        }
     }
 
     getByAssetName(assetName, options = {}) {
@@ -80,11 +87,10 @@ class AssetRepository {
         }
 
 
-
         if (criteria === SPECIFIC_KEYWORD.MAX)
-            groupPipe.$group = _.omit(groupPipe.$group,['minLongPos'])
+            groupPipe.$group = _.omit(groupPipe.$group, ['minLongPos'])
         else if (criteria === SPECIFIC_KEYWORD.MIN)
-            groupPipe.$group = _.omit(groupPipe.$group,['maxLongPos'])
+            groupPipe.$group = _.omit(groupPipe.$group, ['maxLongPos'])
 
         if (startDate)
             matchQuery.$match.date = {"$gte": startDate}
@@ -123,11 +129,10 @@ class AssetRepository {
         }
 
 
-
         if (criteria === SPECIFIC_KEYWORD.MAX)
-            groupPipe.$group = _.omit(groupPipe.$group,['minShortPos'])
+            groupPipe.$group = _.omit(groupPipe.$group, ['minShortPos'])
         else if (criteria === SPECIFIC_KEYWORD.MIN)
-            groupPipe.$group = _.omit(groupPipe.$group,['maxShortPos'])
+            groupPipe.$group = _.omit(groupPipe.$group, ['maxShortPos'])
 
         if (startDate)
             matchQuery.$match.date = {"$gte": startDate}
@@ -151,5 +156,5 @@ class AssetRepository {
 
 
 module.exports = {
-    AssetRepository
+    AssetRepository: AssetsRepository
 }

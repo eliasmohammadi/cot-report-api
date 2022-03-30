@@ -1,4 +1,4 @@
-const {AssetRepository} = require('./asset.repository')
+const {AssetRepository} = require('./assets.repository')
 
 class RepositoryManager {
     setDb(database) {

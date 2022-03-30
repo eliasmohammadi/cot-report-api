@@ -21,11 +21,12 @@ class AssetsTransform extends Transform {
 
 class FilterStream extends Transform {
     constructor(condition) {
-        super({objectMode:true});
+        super({objectMode: true});
         this.condition = condition
     }
+
     _transform(chunk, encoding, callback) {
-        if(this.condition(chunk)){
+        if (this.condition(chunk)) {
             this.push(chunk)
         }
         callback()
@@ -42,13 +43,11 @@ class MongoWriterStream extends Writable {
     }
 
     _insertMany() {
-        try {
-            if (this.records.length !== 0) {
-                this.repo.insertMany(this.records)
-            }
-        } catch (e) {
-            console.log(e)
+
+        if (this.records.length !== 0) {
+            this.repo.insertMany(this.records)
         }
+
     }
 
 
@@ -63,7 +62,6 @@ class MongoWriterStream extends Writable {
             }
             callback()
         } catch (e) {
-
             callback(e)
         }
     }
@@ -73,8 +71,8 @@ class MongoWriterStream extends Writable {
             if (this.records.length > 0) {
                 this._insertMany()
             }
+            callback()
         } catch (e) {
-            if (e.code !== 11000)
                 callback(e)
         }
     }
