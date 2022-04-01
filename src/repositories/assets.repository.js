@@ -152,6 +152,44 @@ class AssetsRepository {
         return this.collection.aggregate(pipeline).toArray()
 
     }
+
+
+    getTopAssets(startDate, endDate, field, criteria, topHitCount, project = {}) {
+        const matchStage = {
+            $match: {
+                date: {
+                    $gte: startDate,
+                    $lte: endDate
+                }
+            }
+        }
+
+        const sortStage = {
+            $sort: {}
+        }
+        sortStage.$sort[`${field}`] = criteria === SPECIFIC_KEYWORD.MAX ? -1 : 1
+        const limitStage = {
+            $limit: topHitCount
+        }
+
+        const pipeline = [
+            matchStage,
+            sortStage,
+            limitStage
+        ]
+
+        if (!_.isEmpty(project)) {
+            const projectStage = {
+                $project: project
+            }
+            pipeline.push(projectStage)
+
+        }
+
+
+        return this.collection.aggregate(pipeline).toArray()
+
+    }
 }
 
 

@@ -67,9 +67,25 @@ async function syncAssets(req, res) {
     }
 }
 
+
+async function getLastWeekTop(req, res) {
+    try {
+
+        const result = await assetService.getLastWeekTop()
+        res.status(200).send({
+            result:result
+        })
+    } catch (e) {
+        res.status(500).send({
+            message:e.message
+        })
+    }
+}
+
 module.exports = {
     getAssets,
     getAssetsAggregation,
     importAssets,
-    syncAssets
+    syncAssets,
+    getLastWeekTop
 }
